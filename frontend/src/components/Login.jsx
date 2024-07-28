@@ -8,6 +8,9 @@ import {
   Box,
   Paper,
 } from "@mui/material";
+import toast from "react-hot-toast";
+
+const backendURL = process.env.REACT_APP_BACKEND_URL;
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -29,20 +32,45 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const formValidationCheck = () => {
     let validationErrors = {};
-
     if (!validateEmail(formData.email)) {
       validationErrors.email = "Email must be a valid Gmail address";
     }
-
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length === 0) {
-      // Submit the form
-      console.log("Form submitted", formData);
+    if (formData.password.length === 0) {
+      validationErrors.password = "Password cannot be blank!";
     }
+    setErrors(validationErrors);
+    return validationErrors;
+  };
+
+  const submitLogin = async () => {
+    try {
+      const response = await fetch(`${backendURL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const resText = await response.text();
+
+      if (!response.ok) {
+        toast.error(resText);
+      } else {
+        toast.success(resText);
+      }
+    } catch (error) {
+      console.error("There was an error submitting the form!", error);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const validationErrors = formValidationCheck();
+    if (Object.keys(validationErrors).length !== 0) return;
+    submitLogin();
   };
 
   return (
@@ -84,6 +112,8 @@ const Login = () => {
               type="password"
               value={formData.password}
               onChange={handleChange}
+              error={!!errors.password}
+              helperText={errors.password}
               sx={{ mb: 2 }}
             />
             <Button
