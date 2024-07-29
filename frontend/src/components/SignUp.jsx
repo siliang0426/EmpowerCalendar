@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import toast from "react-hot-toast";
 import GoogleAuthBtn from "./GoogleAuthBtn";
+import { useNavigate } from "react-router-dom";
 
 const backendURL = process.env.REACT_APP_BACKEND_URL;
 
@@ -22,6 +23,7 @@ const SignUp = () => {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const validateEmail = (email) => {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
@@ -95,6 +97,10 @@ const SignUp = () => {
     if (Object.keys(validationErrors).length !== 0) return;
 
     submitSignUp();
+  };
+
+  const navToSignIn = () => {
+    navigate("/auth/sign-in");
   };
 
   return (
@@ -184,6 +190,15 @@ const SignUp = () => {
               Submit
             </Button>
             <GoogleAuthBtn />
+            <div>
+              <p className="text-center">Or</p>
+              <h2
+                className="text-xl font-bold underline text-center hover:cursor-pointer"
+                onClick={navToSignIn}
+              >
+                Already Have an Account?
+              </h2>
+            </div>
           </form>
         </Paper>
       </Box>

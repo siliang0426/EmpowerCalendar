@@ -82,6 +82,10 @@ const Login = () => {
     submitLogin();
   };
 
+  const navToSignUp = () => {
+    navigate("/auth/sign-up");
+  };
+
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, p: 2 }}>
@@ -139,6 +143,15 @@ const Login = () => {
               Sign In
             </Button>
             <GoogleAuthBtn />
+            <div>
+              <p className="text-center">Or</p>
+              <h2
+                className="text-xl font-bold underline text-center hover:cursor-pointer"
+                onClick={navToSignUp}
+              >
+                Sign Up Here
+              </h2>
+            </div>
           </form>
         </Paper>
       </Box>
