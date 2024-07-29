@@ -6,11 +6,14 @@ import { Toaster } from "react-hot-toast";
 import Landing from "./components/Landing";
 import NavBar from "./components/NavBar";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+const GOOGLE_OAUTH_CLIENT_ID = process.env.REACT_APP_OAUTH_CLIENT_ID;
 
 function App() {
   return (
-    <>
-      <NavBar/>
+    <GoogleOAuthProvider clientId={GOOGLE_OAUTH_CLIENT_ID}>
+      <NavBar />
       <Toaster />
       <BrowserRouter>
         <Routes>
@@ -21,7 +24,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </>
+    </GoogleOAuthProvider>
   );
 }
 

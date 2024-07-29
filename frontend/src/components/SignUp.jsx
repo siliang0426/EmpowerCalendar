@@ -9,6 +9,7 @@ import {
   Paper,
 } from "@mui/material";
 import toast from "react-hot-toast";
+import GoogleAuthBtn from "./GoogleAuthBtn";
 
 const backendURL = process.env.REACT_APP_BACKEND_URL;
 
@@ -182,6 +183,7 @@ const SignUp = () => {
             >
               Submit
             </Button>
+            <GoogleAuthBtn />
           </form>
         </Paper>
       </Box>
