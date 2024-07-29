@@ -10,6 +10,8 @@ import {
 } from "@mui/material";
 import toast from "react-hot-toast";
 import GoogleAuthBtn from "./GoogleAuthBtn";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../providers/UserProvider";
 
 const backendURL = process.env.REACT_APP_BACKEND_URL;
 
@@ -19,6 +21,9 @@ const Login = () => {
     password: "",
   });
   const [errors, setErrors] = useState({});
+
+  const navigate = useNavigate();
+  const { setUser } = useUser();
 
   const validateEmail = (email) => {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
@@ -48,6 +53,7 @@ const Login = () => {
   const submitLogin = async () => {
     try {
       const response = await fetch(`${backendURL}/auth/login`, {
+        credentials: "include",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,12 +61,14 @@ const Login = () => {
         body: JSON.stringify(formData),
       });
 
-      const resText = await response.text();
-
       if (!response.ok) {
-        toast.error(resText);
+        const serverText = await response.text();
+        toast.error(serverText);
       } else {
-        toast.success(resText);
+        const data = await response.json();
+        setUser(data.user);
+        toast.success(data["message"]);
+        navigate("/home");
       }
     } catch (error) {
       console.error("There was an error submitting the form!", error);

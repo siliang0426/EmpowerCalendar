@@ -7,12 +7,13 @@ import bcrypt
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import json
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
-CORS(app)
+CORS(app, support_credentials=True)
 mongo_url = os.getenv('DB_CONNECTION_STRING')
 client = MongoClient(mongo_url)
 db = client['ProjectEmpowerDB']
@@ -22,6 +23,7 @@ GOOGLE_OAUTH_CLIENT_ID=os.getenv("GOOGLE_OAUTH_CLIENT_ID")
 GOOGLE_OAUTH_CLIENT_SECRET=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
 
 @app.route('/auth/google', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def google_auth():
     token = request.json.get('token')
 
@@ -33,6 +35,8 @@ def google_auth():
 
         email = id_info['email']
         registered_user = user_collection.find_one({"email": email})
+        first_name = registered_user['first_name']
+        last_name = registered_user['last_name']
         if not registered_user:
             first_name = id_info['given_name']
             last_name = id_info['family_name']
@@ -40,7 +44,12 @@ def google_auth():
         "email": email})
 
         session['email'] = email
-        return 'Login Success!', 200
+        ret_user = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+            }
+        return jsonify({"message": "Login successful!", "user": ret_user}), 200
     except ValueError as e:
         print(str(e), flush=True)
         return "Server encountered an error upon this request. Please try again later.", 500
@@ -81,6 +90,7 @@ def sign_up():
 
 
 @app.route('/auth/login', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def login():
     try:
         data = request.json
@@ -94,20 +104,26 @@ def login():
         if not user:
             return 'Invalid credentials', 400
 
-        if user.password == None:
+        if 'password' not in user:
             return 'You should log in with google instead!', 400
         
         if not bcrypt.checkpw(password.encode('utf-8'), user['password']):
             return 'Invalid credentials', 400 
         
         session['email'] = email
-        return 'Login successful', 200
+        ret_user = {
+            "first_name": user['first_name'],
+            "last_name": user['last_name'],
+            "email": email,
+        }
+        return jsonify({"message": "Login successful!", "user": ret_user}), 200
     except Exception as e:
         print(f"An error occurred: {e}", flush=True)    
         return 'Server encountered an error. Please try again later', 500
 
 
 @app.route('/auth/logout', methods=['DELETE'])
+@cross_origin(supports_credentials=True)
 def logout():
     try:
         session.pop('email',None)
@@ -118,10 +134,20 @@ def logout():
 
 
 @app.route('/auth/check-login', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def check_login():
     try:
         if 'email' in session:
-            return jsonify({'loggedIn': True}), 200
+            user = user_collection.find_one({'email': session['email']})
+            if not user:
+                return "Malformed session! Please clear cookies and log in again.", 500
+            print(user, flush=True)
+            ret_user = {
+                "first_name": user['first_name'],
+                "last_name": user['last_name'],
+                "email": user['email'],
+            }
+            return jsonify({'loggedIn': True, 'user': ret_user}), 200
         return jsonify({'loggedIn': False}), 200
     except Exception as e:
         print(f"An error occurred: {e}", flush=True)    
