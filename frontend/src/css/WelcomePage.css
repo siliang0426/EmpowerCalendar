@@ -1,13 +1,5 @@
 .welcome-page {
-    font-family: Arial, sans-serif;
-    color: #333;
-    width: flex;
-    min-height: 100vh;
-    background-image: linear-gradient(rgba(9,0,77,0.65),rgba(9,0,77,0.65)),
-    url(image/welcome_page_image.png);
-    background-size: cover;
-    background-position: center;
-    padding: 10px 8%;
+    
 }
 nav{
     width:100%;

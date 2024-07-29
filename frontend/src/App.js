@@ -4,11 +4,13 @@ import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import { Toaster } from "react-hot-toast";
 import Landing from "./components/Landing";
+import NavBar from "./components/NavBar";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
     <>
+      <NavBar/>
       <Toaster />
       <BrowserRouter>
         <Routes>

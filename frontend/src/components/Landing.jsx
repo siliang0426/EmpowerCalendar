@@ -5,7 +5,7 @@ import logo from '../css/image/FigJam basics.png';
 const WelcomePage = () => {
   return (
     <div className="welcome-page">
-      {/* Header */}
+      {/* Header
       <nav>
         <img src={logo} alt="App Logo" className="logo" />
         <ul>
@@ -15,7 +15,7 @@ const WelcomePage = () => {
           <li><a href="#contact">Contact</a></li>
         </ul>
         <button class="btn">Get Started</button>
-      </nav>
+      </nav> */}
 
       {/* Hero Section */}
       <div class="content">
@@ -39,7 +39,6 @@ const WelcomePage = () => {
           </div>
         </div>
       </div>
-
 
 
       {/* Footer
