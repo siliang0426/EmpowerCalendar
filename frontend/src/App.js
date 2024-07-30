@@ -15,9 +15,9 @@ const GOOGLE_OAUTH_CLIENT_ID = process.env.REACT_APP_OAUTH_CLIENT_ID;
 function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_OAUTH_CLIENT_ID}>
+      <BrowserRouter>
       <NavBar />
       <Toaster />
-      <BrowserRouter>
         <UserProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
