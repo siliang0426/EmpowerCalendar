@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import Landing from "./components/Landing";
 import NavBar from "./components/NavBar";
 import Home from "./components/Home";
+import GPT from "./components/GPT";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { UserProvider } from "./providers/UserProvider";
@@ -25,6 +26,7 @@ function App() {
               <Route path="sign-in" element={<Login />} />
               <Route path="sign-up" element={<SignUp />} />
             </Route>
+            <Route path="/gpt" element={<GPT />} />
             <Route path="/home" element={<Home />} />
           </Routes>
         </UserProvider>
