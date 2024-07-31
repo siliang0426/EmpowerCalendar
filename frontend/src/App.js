@@ -17,9 +17,10 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_OAUTH_CLIENT_ID}>
       <BrowserRouter>
+      <UserProvider>
       <NavBar />
       <Toaster />
-        <UserProvider>
+        
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth">

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, redirect, url_for
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from flask_cors import CORS, cross_origin
@@ -7,10 +7,15 @@ import bcrypt
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 import json
 import openai
 
 load_dotenv()
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
@@ -23,37 +28,105 @@ user_collection = db['Users']
 GOOGLE_OAUTH_CLIENT_ID=os.getenv("GOOGLE_OAUTH_CLIENT_ID")
 GOOGLE_OAUTH_CLIENT_SECRET=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
 
+
 @app.route('/auth/google', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def google_auth():
     token = request.json.get('token')
+    
 
     if not token:
         return jsonify({'error': 'Missing token'}), 400
 
     try:
+
         id_info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
 
+        # print(id_info, flush=True)
         email = id_info['email']
         registered_user = user_collection.find_one({"email": email})
         first_name = registered_user['first_name']
         last_name = registered_user['last_name']
+
         if not registered_user:
             first_name = id_info['given_name']
             last_name = id_info['family_name']
-            user_collection.insert_one({"first_name": first_name, "last_name": last_name,
-        "email": email})
+            user_collection.insert_one({"first_name": first_name, "last_name": last_name, "email": email })
 
         session['email'] = email
+
         ret_user = {
                 "first_name": first_name,
                 "last_name": last_name,
-                "email": email,
+                "email": email
             }
         return jsonify({"message": "Login successful!", "user": ret_user}), 200
     except ValueError as e:
         print(str(e), flush=True)
         return "Server encountered an error upon this request. Please try again later.", 500
+
+@app.route('/auth/google/calendar', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def google_auth_calendar():
+
+    scopes = ['https://www.googleapis.com/auth/calendar']
+    flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', scopes=scopes)
+    flow.redirect_uri = url_for('google_auth_calendar_callback', _external=True)
+    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
+    session['state'] = state
+    session['redirect_uri'] = flow.redirect_uri
+    # print(flow.redirect_uri, flush=True)
+    return jsonify({'authorization_url': authorization_url}), 200
+
+@app.route('/auth/google/calendar/callback', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def google_auth_calendar_callback():
+    state = session.get('state')
+    redirect_uri = session.get('redirect_uri')
+    if not state or not redirect_uri:
+        return jsonify({'error': 'Missing state or redirect URI in session'}), 400
+
+    flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/calendar'], state=state)
+    flow.redirect_uri = redirect_uri
+
+    flow.fetch_token(authorization_response=request.url)
+
+    if not flow.credentials:
+        return jsonify({'error': 'Failed to fetch token'}), 500
+
+    credentials = flow.credentials
+    email = session.get('email')
+    if email:
+        user_collection.update_one(
+            {"email": email},
+            {"$set": {"credentials": credentials.to_json()}}
+        )
+        # print(email, flush=True)
+        return redirect('http://localhost:3000/?status=calendar_access_granted')
+    return jsonify({'error': 'User not found'}), 400
+
+
+@app.route('/user/calendar', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_calendar_embed_url():
+    email = session.get('email')
+    if not email:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user = user_collection.find_one({"email": email})
+    print(user, flush=True)
+    if not user or 'credentials' not in user:
+        return jsonify({'error': 'User not authorized or missing credentials'}), 400
+
+    try:
+        credentials = Credentials.from_authorized_user_info(user['credentials'])
+        calendar_id = 'primary'  # Replace with your calendar ID if needed
+        embed_url = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=YOUR_TIMEZONE"  # Adjust timezone if needed
+
+        return jsonify({'calendar_embed_url': embed_url}), 200
+    except Exception as e:
+        print(f"Error fetching calendar embed URL: {str(e)}", flush=True)
+        return jsonify({'error': 'Failed to fetch calendar embed URL'}), 500
 
 
 @app.route('/')
@@ -142,7 +215,7 @@ def check_login():
             user = user_collection.find_one({'email': session['email']})
             if not user:
                 return "Malformed session! Please clear cookies and log in again.", 500
-            print(user, flush=True)
+            # print(user, flush=True)
             ret_user = {
                 "first_name": user['first_name'],
                 "last_name": user['last_name'],
