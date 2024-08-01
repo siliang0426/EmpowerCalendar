@@ -1,6 +1,6 @@
 import React from 'react';
 import '../css/WelcomePage.css';
-import logo from '../css/image/FigJam basics.png';
+// import logo from '../css/image/FigJam basics.png';
 
 const WelcomePage = () => {
   return (

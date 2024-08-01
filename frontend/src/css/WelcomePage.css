@@ -12,6 +12,7 @@ nav{
 }
 .logo{
   height: 180px;
+  width:280px;
   cursor: pointer;
   margin-left: -30px;
 }
@@ -30,9 +31,9 @@ nav ul li a{
   text-decoration: none;
 }
 .btn{
-  display: flex;
+  /* display: flex; */
   height: 40px;
-  width: 142px;
+  width: 150px;
   text-align: center;
   align-items: center;
   padding: 10px 20px;
