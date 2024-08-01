@@ -38,7 +38,7 @@ export const UserProvider = ({ children }) => {
           location.pathname !== "/auth/sign-in" &&
           location.pathname !== "/auth/sign-up"
         ) {
-          navigate("/");
+          navigate("/chat");
         }
       } else {
         navigate("/");

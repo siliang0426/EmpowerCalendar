@@ -8,6 +8,8 @@ import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import json
+from openai import OpenAI
+import logging
 
 load_dotenv()
 
@@ -19,8 +21,11 @@ client = MongoClient(mongo_url)
 db = client['ProjectEmpowerDB']
 user_collection = db['Users']
 
-GOOGLE_OAUTH_CLIENT_ID=os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-GOOGLE_OAUTH_CLIENT_SECRET=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+
+openai_api_key = os.getenv('OPENAI_API_KEY')
+openai_client = OpenAI(api_key=openai_api_key)
 
 @app.route('/auth/google', methods=['POST'])
 @cross_origin(supports_credentials=True)
@@ -153,6 +158,26 @@ def check_login():
         print(f"An error occurred: {e}", flush=True)    
         return 'Server encountered an error. Please try again later', 500
 
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_input = data.get('input')
+    
+    # return jsonify({'response to front': str(user_input)}), 200
+
+    if user_input:
+        api_chat_completion = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are very sarcastic and funny, you are very mean as well."},
+                {"role": "user", "content": user_input}
+            ]
+        )
+        
+        logging.info(api_chat_completion.choices[0].message)
+        return jsonify({'response': str(api_chat_completion.choices[0].message.content)}), 200
+    return jsonify({'response': "Failed"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
