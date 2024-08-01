@@ -25,6 +25,7 @@ GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
+openai_api_system_prompt = os.getenv('OPENAI_API_SYSTEM_PROMPT')
 openai_client = OpenAI(api_key=openai_api_key)
 
 @app.route('/auth/google', methods=['POST'])
@@ -171,7 +172,7 @@ def chat():
         api_chat_completion = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are very sarcastic and funny, you are very mean as well."},
+                {"role": "system", "content": openai_api_system_prompt},
                 {"role": "user", "content": user_input}
             ]
         )
