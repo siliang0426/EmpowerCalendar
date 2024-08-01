@@ -103,7 +103,7 @@ def google_auth_calendar_callback():
             {"$set": {"credentials": credentials.to_json()}}
         )
         # print(email, flush=True)
-        return redirect('http://localhost:3000/?status=calendar_access_granted')
+        return redirect('http://localhost:3000/home?status=calendar_access_granted')
     return jsonify({'error': 'User not found'}), 400
 
 
