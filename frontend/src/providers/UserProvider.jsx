@@ -32,7 +32,7 @@ export const UserProvider = ({ children }) => {
         console.log(data);
         if (data.loggedIn) {
           setUser(data.user);
-          navigate("/home");
+          if (location.pathname === "/") navigate("/home");
         } else if (
           location.pathname !== "/" &&
           location.pathname !== "/auth/sign-in" &&
