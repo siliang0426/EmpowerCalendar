@@ -10,6 +10,7 @@ from google.auth.transport import requests
 import json
 from openai import OpenAI
 import logging
+import openai
 
 load_dotenv()
 
