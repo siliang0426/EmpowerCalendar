@@ -17,6 +17,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
 CORS(app, support_credentials=True)
+
 mongo_url = os.getenv('DB_CONNECTION_STRING')
 client = MongoClient(mongo_url)
 db = client['ProjectEmpowerDB']
