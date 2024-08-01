@@ -40,13 +40,14 @@ def google_auth():
 
         email = id_info['email']
         registered_user = user_collection.find_one({"email": email})
-        first_name = registered_user['first_name']
-        last_name = registered_user['last_name']
+
         if not registered_user:
             first_name = id_info['given_name']
             last_name = id_info['family_name']
-            user_collection.insert_one({"first_name": first_name, "last_name": last_name,
-        "email": email})
+            user_collection.insert_one({"first_name": first_name, "last_name": last_name, "email": email })
+        else:
+            first_name = registered_user['first_name']
+            last_name = registered_user['last_name']
 
         session['email'] = email
         ret_user = {
