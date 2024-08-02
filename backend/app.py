@@ -10,8 +10,11 @@ from google.auth.transport import requests
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
 import json
 import openai
+from datetime import datetime
+from dateutil import tz
 
 load_dotenv()
 
@@ -111,23 +114,151 @@ def google_auth_calendar_callback():
 @cross_origin(supports_credentials=True)
 def get_calendar_embed_url():
     email = session.get('email')
+    # print("Email in session:", email, flush=True)
     if not email:
         return jsonify({'error': 'Unauthorized'}), 401
 
     user = user_collection.find_one({"email": email})
-    print(user, flush=True)
+    # print(user, flush=True)
+    if not user or 'credentials' not in user:
+        return jsonify({'error': 'User not authorized or missing credentials'}), 400
+    try:
+        credentials_dict = json.loads(user['credentials'])
+        credentials = Credentials.from_authorized_user_info(credentials_dict)
+        # print(credentials, flush=True)
+        
+        calendar_id = 'primary'  # Replace with your calendar ID if needed
+        embed_url = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=YOUR_TIMEZONE"  # Adjust timezone if needed
+        # print(embed_url, flush=True)
+        return jsonify({'calendar_embed_url': embed_url}), 200
+    
+    except Exception as e:
+        # print(f"Error fetching calendar embed URL: {str(e)}", flush=True)
+        return jsonify({'error': 'Failed to fetch calendar embed URL'}), 500
+
+@app.route('/user/calendar/create', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def create_empower_calendar():
+    email = session.get('email')
+    # print("Email in session:", email, flush=True)
+    if not email:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user = user_collection.find_one({"email": email})
+    if not user or 'credentials' not in user:
+        return jsonify({'error': 'User not authorized or missing credentials'}), 400
+    
+    try:
+        credentials_json = user['credentials']
+        # print("User credentials JSON:", credentials_json, flush=True)
+
+        credentials_dict = json.loads(credentials_json)
+        # print("User credentials dictionary:", credentials_dict, flush=True)
+        
+        credentials = Credentials.from_authorized_user_info(credentials_dict)
+        # print("Credentials object created:", credentials, flush=True)
+        
+        # Refresh the credentials if they are expired
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+            # print("Credentials refreshed", flush=True)
+
+        service = build('calendar', 'v3', credentials=credentials)
+        # print("Google Calendar service built", flush=True)
+        
+        # Check if the empower_calendar already exists
+        calendar_list = service.calendarList().list().execute()
+        # print("Calendar list retrieved:", calendar_list, flush=True)
+
+        for calendar in calendar_list['items']:
+            # print("Checking calendar:", calendar, flush=True)
+            if calendar['summary'] == 'empower_calendar':
+                # print("empower_calendar already exists with ID:", calendar['id'], flush=True)
+                return jsonify({'calendar_id': calendar['id']}), 200
+
+        # Create a new calendar
+        calendar = {
+            'summary': 'empower_calendar',
+            'timeZone': 'America/New_York'
+        }
+        # print("New calendar details:", calendar, flush=True)
+
+        created_calendar = service.calendars().insert(body=calendar).execute()
+        # print("Created calendar:", created_calendar, flush=True)
+
+        return jsonify({'calendar_id': created_calendar['id']}), 201
+    
+    except Exception as e:
+        # print(f"Error creating calendar: {str(e)}", flush=True)
+        return jsonify({'error': 'Failed to create calendar'}), 500
+    
+
+@app.route('/user/calendar/event', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def add_event_to_calendar():
+    email = session.get('email')
+    print("Email in session:", email, flush=True)
+    if not email:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user = user_collection.find_one({"email": email})
     if not user or 'credentials' not in user:
         return jsonify({'error': 'User not authorized or missing credentials'}), 400
 
-    try:
-        credentials = Credentials.from_authorized_user_info(user['credentials'])
-        calendar_id = 'primary'  # Replace with your calendar ID if needed
-        embed_url = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=YOUR_TIMEZONE"  # Adjust timezone if needed
+    event_data = request.json
+    print("Event data received:", event_data, flush=True)
 
-        return jsonify({'calendar_embed_url': embed_url}), 200
+    calendar_id = event_data.get('calendar_id')
+    event = event_data.get('event')
+
+    print("Calendar ID:", calendar_id, flush=True)
+    print("Event to be created:", event, flush=True)
+
+    if not calendar_id or not event:
+        return jsonify({'error': 'Missing calendar ID or event data'}), 400
+
+    try:
+        credentials_dict = json.loads(user['credentials'])
+        print("Credentials dictionary:", credentials_dict, flush=True)
+        
+        credentials = Credentials.from_authorized_user_info(credentials_dict)
+        print("Credentials object created:", credentials, flush=True)
+        
+        # Refresh the credentials if they are expired
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+            print("Credentials refreshed", flush=True)
+
+        service = build('calendar', 'v3', credentials=credentials)
+        print("Google Calendar service built", flush=True)
+
+        # Ensure dateTime is in proper format
+        event['start']['dateTime'] = ensure_iso_format(event['start']['dateTime'])
+        event['end']['dateTime'] = ensure_iso_format(event['end']['dateTime'])
+        print("Formatted Event Start DateTime:", event['start']['dateTime'], flush=True)
+        print("Formatted Event End DateTime:", event['end']['dateTime'], flush=True)
+
+        # Log the request body
+        print("Request body for event creation:", json.dumps(event, indent=2), flush=True)
+        
+        created_event = service.events().insert(calendarId=calendar_id, body=event).execute()
+        print("Created event:", created_event, flush=True)
+        
+        return jsonify({'event': created_event}), 201
+    
     except Exception as e:
-        print(f"Error fetching calendar embed URL: {str(e)}", flush=True)
-        return jsonify({'error': 'Failed to fetch calendar embed URL'}), 500
+        print(f"Error adding event: {str(e)}", flush=True)
+        return jsonify({'error': 'Failed to add event'}), 500
+
+
+def ensure_iso_format(dt_str):
+    try:
+        dt = datetime.fromisoformat(dt_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=tz.gettz('America/New_York'))
+        return dt.isoformat()
+    except ValueError:
+        return dt_str
 
 
 @app.route('/')
