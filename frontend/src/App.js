@@ -1,13 +1,15 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+
 import logo from "./logo.svg";
 import "./App.css";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
-import { Toaster } from "react-hot-toast";
 import Landing from "./components/Landing";
 import NavBar from "./components/NavBar";
 import Home from "./components/Home";
+import ChatGPT from "./components/ChatGPT";
 import GPT from "./components/GPT";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { UserProvider } from "./providers/UserProvider";
 
@@ -20,7 +22,6 @@ function App() {
       <UserProvider>
       <NavBar />
       <Toaster />
-        
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth">
@@ -29,6 +30,7 @@ function App() {
             </Route>
             <Route path="/gpt" element={<GPT />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/chat" element={<ChatGPT />} />
           </Routes>
         </UserProvider>
       </BrowserRouter>

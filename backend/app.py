@@ -12,6 +12,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 import json
+from openai import OpenAI
+import logging
 import openai
 from datetime import datetime
 from dateutil import tz
@@ -23,13 +25,18 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
 CORS(app, support_credentials=True)
+
 mongo_url = os.getenv('DB_CONNECTION_STRING')
 client = MongoClient(mongo_url)
 db = client['ProjectEmpowerDB']
 user_collection = db['Users']
 
-GOOGLE_OAUTH_CLIENT_ID=os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-GOOGLE_OAUTH_CLIENT_SECRET=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+
+openai_api_key = os.getenv('OPENAI_API_KEY')
+openai_api_system_prompt = os.getenv('OPENAI_API_SYSTEM_PROMPT')
+openai_client = OpenAI(api_key=openai_api_key)
 
 
 @app.route('/auth/google', methods=['POST'])
@@ -359,6 +366,26 @@ def check_login():
         print(f"An error occurred: {e}", flush=True)    
         return 'Server encountered an error. Please try again later', 500
 
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_input = data.get('input')
+    
+    # return jsonify({'response to front': str(user_input)}), 200
+
+    if user_input:
+        api_chat_completion = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": openai_api_system_prompt},
+                {"role": "user", "content": user_input}
+            ]
+        )
+        
+        logging.info(api_chat_completion.choices[0].message)
+        return jsonify({'response': str(api_chat_completion.choices[0].message.content)}), 200
+    return jsonify({'response': "Failed"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
