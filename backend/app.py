@@ -359,6 +359,7 @@ def check_login():
                 "first_name": user['first_name'],
                 "last_name": user['last_name'],
                 "email": user['email'],
+                "credentials": True if user.get('credentials', None) else False
             }
             return jsonify({'loggedIn': True, 'user': ret_user}), 200
         return jsonify({'loggedIn': False}), 200

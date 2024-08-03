@@ -11,16 +11,16 @@ const Home = () => {
   const [status, setStatus] = useState("");
   const [calendarId, setCalendarId] = useState("");
   const [eventData, setEventData] = useState({
-    summary: '',
-    description: '',
+    summary: "",
+    description: "",
     start: {
-      dateTime: '',
-      timeZone: 'America/New_York'
+      dateTime: "",
+      timeZone: "America/New_York",
     },
     end: {
-      dateTime: '',
-      timeZone: 'America/New_York'
-    }
+      dateTime: "",
+      timeZone: "America/New_York",
+    },
   });
   const [iframeKey, setIframeKey] = useState(0);
 
@@ -28,15 +28,15 @@ const Home = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const status = params.get('status');
-    if (status) {
-      console.log("This is the status" + status);
-      setStatus(status);
-      if (user && status === 'calendar_access_granted') {
-        console.log("fetch called");
-        fetchCalendarEmbedUrl();
-      }
+    // const status = params.get('status');
+    // if (status) {
+    // console.log("This is the status" + status);
+    // setStatus(status);
+    if (user && user.credentials) {
+      console.log("fetch called");
+      fetchCalendarEmbedUrl();
     }
+    // }
   }, [user, location.search]);
 
   useEffect(() => {
@@ -45,8 +45,8 @@ const Home = () => {
 
   const fetchCalendarEmbedUrl = () => {
     fetch(`${backendURL}/user/calendar`, {
-      method: 'GET',
-      credentials: 'include',
+      method: "GET",
+      credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {
@@ -55,21 +55,26 @@ const Home = () => {
           setCalendarEmbedUrl(data.calendar_embed_url);
         }
       })
-      .catch((error) => console.error("Error fetching calendar embed URL:", error));
+      .catch((error) =>
+        console.error("Error fetching calendar embed URL:", error)
+      );
   };
 
   const handleGoogleCalendarAuth = async () => {
     try {
       const response = await fetch(`${backendURL}/auth/google/calendar`, {
-        method: 'GET',
-        credentials: 'include',
+        method: "GET",
+        credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
         window.location.href = data.authorization_url;
       } else {
-        console.error("Error initiating Google Calendar authorization:", response.statusText);
+        console.error(
+          "Error initiating Google Calendar authorization:",
+          response.statusText
+        );
       }
     } catch (error) {
       console.error("Error initiating Google Calendar authorization:", error);
@@ -78,8 +83,8 @@ const Home = () => {
 
   const createEmpowerCalendar = () => {
     fetch(`${backendURL}/user/calendar/create`, {
-      method: 'POST',
-      credentials: 'include',
+      method: "POST",
+      credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {
@@ -95,20 +100,20 @@ const Home = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const [parent, child] = name.split('.');
+    const [parent, child] = name.split(".");
 
     if (child) {
-      setEventData(prevState => ({
+      setEventData((prevState) => ({
         ...prevState,
         [parent]: {
           ...prevState[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
-      setEventData(prevState => ({
+      setEventData((prevState) => ({
         ...prevState,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -120,26 +125,26 @@ const Home = () => {
       description: eventData.description,
       start: {
         dateTime: new Date(eventData.start.dateTime).toISOString(),
-        timeZone: eventData.start.timeZone
+        timeZone: eventData.start.timeZone,
       },
       end: {
         dateTime: new Date(eventData.end.dateTime).toISOString(),
-        timeZone: eventData.end.timeZone
-      }
+        timeZone: eventData.end.timeZone,
+      },
     };
 
     fetch(`${backendURL}/user/calendar/event`, {
-      method: 'POST',
-      credentials: 'include',
+      method: "POST",
+      credentials: "include",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ calendar_id: calendarId, event })
+      body: JSON.stringify({ calendar_id: calendarId, event }),
     })
       .then((response) => response.json())
       .then((data) => {
         console.log(`Event added: ${data.event}`);
-        setIframeKey(prevKey => prevKey + 1);
+        setIframeKey((prevKey) => prevKey + 1);
       })
       .catch((error) => console.error("Error adding event:", error));
   };
@@ -151,18 +156,27 @@ const Home = () => {
       <h1>
         Hi {user.first_name} {user.last_name} with email {user.email}
       </h1>
-      {status === 'calendar_access_granted' && <p>Calendar access granted!</p>}
-      <Button variant="contained" color="primary" onClick={handleGoogleCalendarAuth}>
-        Authorize Google Calendar
-      </Button>
+      {!calendarEmbedUrl && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleGoogleCalendarAuth}
+        >
+          Authorize Google Calendar
+        </Button>
+      )}
       {calendarEmbedUrl && (
         <iframe
           key={iframeKey}
           src={calendarEmbedUrl}
-          style={{ border: 0, width: '100%', height: '600px' }}
+          style={{ border: 0, width: "100%", height: "600px" }}
         ></iframe>
       )}
-      <Button variant="contained" color="primary" onClick={createEmpowerCalendar}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={createEmpowerCalendar}
+      >
         Create Empower Calendar
       </Button>
       {calendarId && (
@@ -219,5 +233,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
