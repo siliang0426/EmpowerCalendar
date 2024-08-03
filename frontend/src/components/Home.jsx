@@ -152,9 +152,9 @@ const Home = () => {
   if (!user) return <div>Loading...</div>;
 
   return (
-    <Box>
-      <h1>
-        Hi {user.first_name} {user.last_name} with email {user.email}
+    <Box className="space-y-8">
+      <h1 className="text-white text-2xl text-bold">
+        Hi {user.first_name} {user.last_name}
       </h1>
       {!calendarEmbedUrl && (
         <Button
@@ -165,6 +165,13 @@ const Home = () => {
           Authorize Google Calendar
         </Button>
       )}
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={createEmpowerCalendar}
+      >
+        Open Empower Calendar
+      </Button>
       {calendarEmbedUrl && (
         <iframe
           key={iframeKey}
@@ -172,15 +179,11 @@ const Home = () => {
           style={{ border: 0, width: "100%", height: "600px" }}
         ></iframe>
       )}
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={createEmpowerCalendar}
-      >
-        Create Empower Calendar
-      </Button>
       {calendarId && (
-        <form onSubmit={addEvent}>
+        <form onSubmit={addEvent} className="bg-white p-8">
+          <h1 className="text-bold text-xl text-black">
+            Please enter the event information:{" "}
+          </h1>
           <TextField
             type="text"
             name="summary"

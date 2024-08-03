@@ -1,5 +1,5 @@
-import React from 'react';
-import '../css/WelcomePage.css';
+import React from "react";
+import "../css/WelcomePage.css";
 // import logo from '../css/image/FigJam basics.png';
 
 const WelcomePage = () => {
@@ -20,8 +20,15 @@ const WelcomePage = () => {
       {/* Hero Section */}
       <div class="content">
         <div class="col">
-          <h1>Welcome to<br/> [App Name]</h1>
-          <p>Helping first-generation low-income students balance work and study schedules effectively.</p>
+          <h1 className="text-left text-white">
+            Welcome to
+            <br />
+            <p className="underline">Empower Calendar</p>
+          </h1>
+          <p>
+            Helping first-generation low-income students balance work and study
+            schedules effectively.
+          </p>
         </div>
 
         <div class="col">
@@ -40,7 +47,6 @@ const WelcomePage = () => {
         </div>
       </div>
 
-
       {/* Footer
       <footer>
         <p>Contact us: email@example.com</p>
@@ -49,7 +55,7 @@ const WelcomePage = () => {
           <a href="#terms-of-service">Terms of Service</a>
         </div>
       </footer>*/}
-    </div> 
+    </div>
   );
 };
 
